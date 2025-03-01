@@ -1,7 +1,7 @@
 from aiogram.fsm.state import State, StatesGroup
 
 
-class Quest(StatesGroup):
+class QuestState(StatesGroup):
     answer = State()
 
 

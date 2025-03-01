@@ -24,13 +24,16 @@ class Class(Model):
     capitan_id = fields.ForeignKeyField(
         "models.User", related_name="capitan", null=True
     )
-    is_active = fields.BooleanField(default=True)
 
     users = fields.ReverseRelation["User"]
     quests = fields.ReverseRelation["Quest"]
     
     state_game = fields.BooleanField(default=False)
     last_task = fields.IntField(default=1)
+    
+    start_time = fields.DatetimeField(null=True)
+
+    is_active = fields.BooleanField(default=True, null=False)
 
     class Meta:
         table = "classes"
@@ -39,21 +42,24 @@ class Class(Model):
 class Quest(Model):
     id = fields.BigIntField(pk=True)
     name = fields.CharField(max_length=255, unique=True)
+    data = fields.CharField(max_length=255, null=True)
     text = fields.TextField()
     answer = fields.TextField()
     type = fields.CharField(max_length=255)
-    for_class = fields.ForeignKeyField("models.Class", related_name="quests")
+    for_class = fields.ForeignKeyField("models.Class", related_name="quests", null=True)
     is_active = fields.BooleanField(default=True)
 
     class Meta:
         table = "quests"
 
 
-class Point(Model):
+class Score(Model):
     id = fields.BigIntField(pk=True)
 
-    quest = fields.ForeignKeyField("models.Quest", related_name="points")
-    class_ = fields.ForeignKeyField("models.Class", related_name="points")
+    score = fields.IntField(default=0)
+
+    quest = fields.ForeignKeyField("models.Quest", related_name="points", on_delete="RESTRICT")
+    class_ = fields.ForeignKeyField("models.Class", related_name="points", on_delete="CASCADE")
 
     class Meta:
-        table = "points"
+        table = "scores"

@@ -3,6 +3,7 @@ from pydantic import BaseModel, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
+from enum import Enum
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -19,7 +20,8 @@ class Settings(BaseSettings):
     DB_PORT: int
     DB_NAME: str
 
-    model_tasks: ClassVar[list[str]] = ["TEXT", "TEXT", "MUSIC", "MUSIC", "PIC", "PIC", "TEXT"]
+    model_tasks: ClassVar[list[str]] = [
+        "CROSSWORD", "TEXT", "MUSIC", "MUSIC", "PIC", "PIC", "TEXT", "TEXT", "TEXT"]
 
     ADMINS: ClassVar[list[int]] = [2075302695]
 
@@ -49,3 +51,12 @@ AERICH_CONFIG: dict = {
         }
     },
 }
+
+
+class ScoringRules(Enum):
+    CROSSWORD = 10
+    TEXT = 3
+    MUSIC = 6
+    PIC = 8
+    VIDEO = 20
+
