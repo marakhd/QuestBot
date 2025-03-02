@@ -8,7 +8,7 @@ class User(Model):
     tg_id = fields.BigIntField(unique=True)
     full_name = fields.CharField(max_length=255, null=True)
 
-    class_id = fields.ForeignKeyField(
+    sch_class = fields.ForeignKeyField(
         "models.Class",  # Связь с таблицей classes
         related_name="users",  # Позволяет получать список пользователей через `class_obj.users.all()`
         on_delete=fields.CASCADE,  # Если класс удаляется — удаляются и пользователи
@@ -21,7 +21,7 @@ class User(Model):
 class Class(Model):
     id = fields.BigIntField(pk=True)
     name = fields.CharField(max_length=255, unique=True)
-    capitan_id = fields.ForeignKeyField(
+    capitan = fields.ForeignKeyField(
         "models.User", related_name="capitan", null=True
     )
 

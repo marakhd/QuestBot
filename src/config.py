@@ -53,7 +53,7 @@ AERICH_CONFIG: dict = {
 }
 
 
-class ScoringRules(Enum):
+class ScoringRules():
     CROSSWORD = 10
     TEXT = 3
     MUSIC = 6

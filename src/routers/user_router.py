@@ -1,12 +1,14 @@
 from aiogram import Router, F
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, ContentType
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, URLInputFile
+from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
+from aiogram.enums import ChatAction
+
+import random
+from textwrap import dedent
 
 from tortoise.expressions import Q
-
-from textwrap import dedent
 
 from config import ScoringRules, settings
 from db import User, Class, Quest, Score
@@ -38,17 +40,21 @@ start_text = lambda message: dedent(
 async def start(message: Message):
     user = await User.get_or_none(
         tg_id=message.from_user.id,
-    )
+    ).prefetch_related("sch_class")
+
+    if not (await message.bot.get_chat(message.chat.id)).pinned_message:
+            await (await message.answer("Если бот перестал работать - пропишите /start")).pin()
 
     if not user:
         await message.answer(start_text(message), reply_markup=await create_class_selection_kb())
     else:
-        class_ = await Class.get_or_none(id=user.class_id) 
+        class_ = user.sch_class
 
         if class_:
             await message.answer(
                 f"Вы уже зарегистрированны в {class_.name}. Перейти к вопросу можно по кнопке.",
-                reply_markup=[[InlineKeyboardButton(text="Перейти к вопросу", callback_data=f"quest_{class_.last_task}")]],
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                    InlineKeyboardButton(text="Перейти к вопросу", callback_data=f"quest_{class_.last_task}")]]),
             )
 
 @router.message(Command("service"))
@@ -66,19 +72,19 @@ async def service(message: Message):
 # Обработчик для выбора класса (callback)
 @router.callback_query(F.data.startswith("class_"))
 async def select_class(callback: CallbackQuery):
-    class_id = int(callback.data.split("_")[1])
-    class_ = await Class.get(id=class_id).prefetch_related("capitan_id")
+    sch_class = int(callback.data.split("_")[1])
+    class_ = await Class.get(id=sch_class).prefetch_related("capitan")
 
     kb = (InlineKeyboardBuilder()
          .button(text="Выбрать другой класс", callback_data="choose_another_class")
-         .button(text="Все верно", callback_data=f"continue_{class_id}"))
+         .button(text="Все верно", callback_data=f"continue_{sch_class}"))
 
-    capitan = class_.capitan_id
+    capitan = class_.capitan
 
     await callback.message.edit_text(
         f"Вы выбрали класс {class_.name}\n\n"
     + (f'Капитан - <a href="tg://user?id={capitan.tg_id}">{capitan.full_name}</a> '
-        f'({capitan.tg_username if capitan.tg_username else "Юзернейма нет"})\n\n' if capitan else "Капитана нет!\n")
+        f'({f"@{capitan.tg_username}" if capitan.tg_username else "Юзернейма нет"})\n\n' if capitan else "Капитана нет!\n")
     + f"Состояние: {"запущен" if class_.state_game else "не запущен"}", reply_markup=kb.as_markup())
 
 
@@ -91,14 +97,14 @@ async def choose_another_class(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("continue_"))
 async def start_quest(callback: CallbackQuery):
-    class_id = int(callback.data.split("_")[1])
-    class_ = await Class.get(id=class_id)
+    sch_sch_class = int(callback.data.split("_")[1])
+    class_ = await Class.get(id=sch_sch_class)
 
     user = await User.get_or_create(
         tg_id=callback.from_user.id,
         defaults={
             "tg_username": callback.from_user.username,
-            "class_id": class_,
+            "sch_class": class_,
             "full_name": callback.from_user.full_name,
         },
     )
@@ -107,7 +113,7 @@ async def start_quest(callback: CallbackQuery):
         text="Перейти к квесту", callback_data=f"quest_{class_.last_task}")
 
     # Если капитан не выбран, добавляем кнопку для становления капитаном
-    if not class_.capitan_id:
+    if not class_.capitan:
         kb.button(text="Стать капитаном", callback_data="capitan_choice")
 
     await callback.answer()
@@ -116,7 +122,7 @@ async def start_quest(callback: CallbackQuery):
 
 Вам предстоит пройти {len(settings.model_tasks)} заданий, чтобы побороться за свой сертификат.
 
-Также у вас будет возможность выполнить доп. задание "со звездочкой" и получить доп. {ScoringRules.VIDEO} баллов 
+Также у вас будет возможность выполнить доп. задание "со звездочкой" и получить доп. {int(ScoringRules.VIDEO)} баллов 
 
 Приступим?""", reply_markup=kb.as_markup())
 
@@ -127,17 +133,17 @@ async def capitan_choice(callback: CallbackQuery):
 
     await callback.message.edit_text(
         "Для вашего класса пока не выбран капитан, и именно ты можешь им стать - просто нажми кнопку ниже...",
-        reply_markup=[[
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(callback_data="capitan_selected", text="Стать капитаном")
-        ]])
+        ]]))
 
 
 @router.callback_query(F.data == "capitan_selected")
 async def capitan_selected(callback: CallbackQuery):
-    user = await User.get(tg_id=callback.from_user.id)
-    class_ = await Class.get(id=user.class_id)
+    user = await User.get(tg_id=callback.from_user.id).prefetch_related("sch_class")
+    class_ = user.sch_class
 
-    await Class.update_or_create(id=class_.id, defaults={"capitan_id": user})
+    await Class.update_or_create(id=class_.id, defaults={"capitan": user, "state_game": True})
 
     await callback.answer()
     await callback.message.edit_text("Вы стали капитаном класса!",
@@ -150,28 +156,38 @@ async def capitan_selected(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("quest_"))
 async def quest(callback: CallbackQuery, state: FSMContext):
     quest_number = int(callback.data.split("_")[1])
+    quest_id = int(callback.data.split("_")[2])
     quest_type = settings.model_tasks[quest_number - 1]
-    user = await User.get(tg_id=callback.from_user.id).prefetch_related("class_id")
-    class_ = user.class_id
+    user = await User.get(tg_id=callback.from_user.id).prefetch_related("sch_class")
+    class_ = user.sch_class
 
-    quests = await Quest.filter(
-        (Q(for_class=class_) | Q(for_class=None)),
-        type=quest_type,
-        is_active=True
-    ).order_by("for_class")                                                                          # Получаем все задания для класса
-
-    if not quests:
-        await callback.answer("Задания не найдены")
+    if not class_.capitan:
+        await callback.answer("Капитан не выбран, начинать нельзя", show_alert=True)
         return
 
-    active_quest = None
-    for quest in quests:
-        if Score.get_or_none(quest=quest, class_=class_):
-            active_quest = quest
-            break
+    if not quest_id: 
+        quests = await Quest.filter(
+            (Q(for_class__id=class_.id) | Q(for_class=None)),
+            type=quest_type,
+            is_active=True
+        ).order_by("for_class__name") # Получаем все задания для класса
+
+        if not quests:
+            await callback.answer("Задания не найдены")
+            return
+
+        random.shuffle(quests)
+
+        active_quest = None
+        for quest in quests:
+            if not Score.get_or_none(quest=quest, class_=class_):
+                active_quest = quest
+                break
+    else:
+        active_quest = await Quest.get_or_none(id=quest_id)
 
     if not active_quest:
-        await callback.answer("Задания не найдены")
+        await callback.answer("Задание не найдено")
         return
 
     await state.set_data({"quest": active_quest, "quest_number": quest_number})
@@ -185,47 +201,57 @@ async def quest(callback: CallbackQuery, state: FSMContext):
 Ответ: {active_quest.answer}
 """)
     elif quest_type == "MUSIC":
-        await callback.message.answer_audio(active_quest.data, caption=f"""
+        await callback.bot.send_chat_action(callback.from_user.id, ChatAction.UPLOAD_VOICE)
+        msg = await callback.message.answer("Загрузка...")
+        await msg.answer_audio(URLInputFile(active_quest.data), caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
 {active_quest.text}\n\n
 Ответ: {active_quest.answer}
 """)
+        await msg.delete()
     elif quest_type == "PIC":
-        await callback.message.answer_photo(active_quest.data, caption=f"""
+        await callback.bot.send_chat_action(callback.from_user.id, ChatAction.UPLOAD_PHOTO)
+        msg = await callback.message.answer("Загрузка...")
+        await callback.message.answer_photo(URLInputFile(active_quest.data), caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
 {active_quest.text}\n\n
 Ответ: {active_quest.answer}
 """)
+        await msg.delete()
 
     await state.set_state(QuestState.answer)
-
-    for user in await User.filter(class_id=class_.id):
-        await callback.bot.send_message(
-            chat_id=user.tg_id,
-            text=f"Задание {quest_number} из {len(settings.model_tasks)}\n\n\n\n"
-            f"Кто то уже решил задание, вы можете посмотреть следущее, нажмите на кнопку",
-            reply_markup=[[InlineKeyboardButton(text="Получить задание", callback_data=f"quest_{quest_number}")]]
-        )
 
 
 @router.message(QuestState.answer)
 async def answer_quest(message: Message, state: FSMContext):
     data = await state.get_data()
+    quest_number = data.get("quest_number")
     quest: Quest = data["quest"]
-    user = await User.get(tg_id=message.from_user.id)
-    class_ = await Class.get(id=user.class_id)
+    user = await User.get(tg_id=message.from_user.id).prefetch_related("sch_class")
+    class_: Class = user.sch_class
 
-    condition = data.get("quest_number") < len(settings.model_tasks)
+    condition = quest_number < len(settings.model_tasks)
 
     if message.text.lower() == quest.answer.lower():
         await message.answer("Правильно!")
         await Score.create(quest=quest, class_=class_, score=getattr(ScoringRules, quest.type))
+        class_.last_task = quest_number + 1
+        await class_.save()
         await state.clear()
         await message.answer("Перейти к следующему заданию?" if condition \
-            else f"Основные задания завершены!\nВы можете перейти на задание со звездочкой (Можно получить до {ScoringRules.VIDEO} баллов) или закончить квест",
-            reply_markup=[[InlineKeyboardButton(text="Да", callback_data=f"quest_{data.get("quest_number") + 1}")]] if condition else [[
+            else f"Основные задания завершены!\nВы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) или закончить квест",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Да", callback_data=f"quest_{class_.last_task}")]] if condition else [[
                 InlineKeyboardButton(text="Да", callback_data="additional_task_star"),
-                InlineKeyboardButton(text="Завершить")]])
+                InlineKeyboardButton(text="Завершить")]]))
+
+        for user in await User.filter(sch_class=class_.id):
+            if user.tg_id != message.from_user.id:
+                await message.bot.send_message(
+                    chat_id=user.tg_id,
+                    text=f"Задание {quest_number} из {len(settings.model_tasks)}\n\n"
+                    f"Кто то уже решил задание, вы можете посмотреть следущее, нажмите на кнопку",
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Получить задание", callback_data=f"quest_{quest_number}_{quest.id}")]])
+                )
     else:
         await message.answer("Неправильно, попробуйте еще раз!")
 
@@ -245,9 +271,9 @@ async def download_video(message: Message, state: FSMContext):
         await message.bot.send_message(
             chat_id=admin_id,
             text=f"""Отправил видео поздравление от {message.from_user.full_name}
-Класс: {await Class.get(id=User.get(tg_id=message.from_user.id).class_id).name}""")
+Класс: {await Class.get(id=User.get(tg_id=message.from_user.id).sch_class).name}""")
     
-    await Class.filter(id=User.get(tg_id=message.from_user.id).class_id).limit(1).update(is_active=False)
+    await Class.filter(id=User.get(tg_id=message.from_user.id).sch_class).limit(1).update(is_active=False)
     await state.clear()
     
     msg = await msg.edit_text("Видео загружено, спасибо!")
@@ -256,8 +282,12 @@ async def download_video(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "end_quest")
 async def end_quest(callback: CallbackQuery):
-    await Class.filter(id=User.get(tg_id=callback.from_user.id).class_id).limit(1).update(is_active=False)
+    await Class.filter(id=User.get(tg_id=callback.from_user.id).sch_class).limit(1).update(is_active=False)
 
     await callback.answer()
     await callback.message.edit_text("Квест завершен! Спасибо за участие, результат вы узнаете на линейке в понедельник!")
 
+
+@router.message()
+async def echo(message: Message):
+    await message.answer("Пропиши /start")
