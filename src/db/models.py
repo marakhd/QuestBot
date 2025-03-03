@@ -21,16 +21,15 @@ class User(Model):
 class Class(Model):
     id = fields.BigIntField(pk=True)
     name = fields.CharField(max_length=255, unique=True)
-    capitan = fields.ForeignKeyField(
-        "models.User", related_name="capitan", null=True
-    )
+    capitan = fields.ForeignKeyField("models.User", related_name="capitan", null=True)
 
     users = fields.ReverseRelation["User"]
     quests = fields.ReverseRelation["Quest"]
-    
+
     state_game = fields.BooleanField(default=False)
-    last_task = fields.IntField(default=1)
-    
+    last_task_number = fields.IntField(default=1)
+    last_task = fields.ForeignKeyField("models.Quest", related_name="last_task", null=True)
+
     start_time = fields.DatetimeField(null=True)
 
     is_active = fields.BooleanField(default=True, null=False)

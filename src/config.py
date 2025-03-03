@@ -3,7 +3,6 @@ from pydantic import BaseModel, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
-from enum import Enum
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
