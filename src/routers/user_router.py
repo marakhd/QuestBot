@@ -225,6 +225,10 @@ async def quest(callback: CallbackQuery, state: FSMContext):
     else:
         active_quest = await Quest.get_or_none(id=quest_id)
 
+    if await Score.get_or_none(quest=active_quest, class_=class_):
+        await callback.answer("Задание уже выполнено", show_alert=True)
+        return
+
     if not active_quest:
         await callback.answer("Задание не найдено", show_alert=True)
         return
@@ -305,14 +309,25 @@ async def answer_quest(message: Message, state: FSMContext):
             )
 
         for user in await User.filter(sch_class=class_.id):
-            if user.tg_id != message.from_user.id:
-                await message.bot.send_message(
-                    chat_id=user.tg_id,
-                    text=f"Задание {quest_number + 1} из {len(settings.model_tasks)}\n\n"
-                    f"Кто-то уже решил задание, вы можете посмотреть следующее, нажмите на кнопку",
-                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
-                        text="Получить задание", callback_data=f"quest_{class_.last_task_number}_{active_quest.id}")]])
-                )
+            if quest_number <= len(settings.model_tasks):
+                if user.tg_id != message.from_user.id:
+                    await message.bot.send_message(
+                        chat_id=user.tg_id,
+                        text=f"Задание {quest_number + 1} из {len(settings.model_tasks)}\n\n"
+                        f"Кто-то уже решил задание, вы можете посмотреть следующее, нажмите на кнопку",
+                        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
+                            text="Получить задание", callback_data=f"quest_{class_.last_task_number}_{active_quest.id}")]])
+                    )
+            else:
+                if user.tg_id != message.from_user.id:
+                    await message.bot.send_message(
+                        chat_id=user.tg_id,
+                        text =f"Основные задания завершены!\n"
+                        f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
+                        f"или закончить квест",
+                        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Да", callback_data="additional_task_star"),
+                                                                        InlineKeyboardButton(text="Завершить", callback_data="end_quest")]])
+                    )
     else:
         await message.answer("Неправильно, попробуйте еще раз!")
 
@@ -328,7 +343,7 @@ async def additional_task_star(callback: CallbackQuery, state: FSMContext):
 @router.message(AdditionalTask.download_video, F.video)
 async def download_video(message: Message, state: FSMContext):
     msg = await message.answer("Загрузка видео...")
-    user = User.get(tg_id=message.from_user.id).prefetch_related("sch_class")
+    user: User = await User.get(tg_id=message.from_user.id).prefetch_related("sch_class")
     for admin_id in settings.ADMINS:
         await message.forward(chat_id=admin_id)
         await message.bot.send_message(
