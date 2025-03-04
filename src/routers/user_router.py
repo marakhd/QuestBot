@@ -167,11 +167,11 @@ async def start_quest(callback: CallbackQuery):
 
     await callback.answer()
 
-    await callback.message.edit_text(f"""Вы выбрали класс {class_.name}. Начинаем квест!
+    await callback.message.edit_text(f"""Вы выбрали {class_.name} класс. Начинаем квест!
 
-Вам предстоит пройти {len(settings.model_tasks)} заданий, чтобы побороться за свой сертификат.
+Вам предстоит выполнить {len(settings.model_tasks)} основных заданий, и 2 дополнительных.
 
-Также у вас будет возможность выполнить доп. задание "со звездочкой" и получить доп. {int(ScoringRules.VIDEO)} баллов 
+За дополнительные задания можно получить до 30 баллов.
 
 Приступим?""", reply_markup=kb.as_markup())
 
@@ -276,60 +276,66 @@ async def answer_quest(message: Message, state: FSMContext):
 
     condition = quest_number < len(settings.model_tasks)
 
-    if message.text.lower() == data['quest'].answer.lower():
-        await message.answer("Правильно!")
-        await Score.create(
-            quest=data['quest'],
-            class_=class_,
-            score=getattr(ScoringRules, data['quest'].type)
-        )
+    score_count = await Score.filter(class_=class_, quest=data['quest']).count()
 
-        class_.last_task_number = quest_number + 1
-        await class_.save()
-        await state.clear()
-
-        if condition:
-            active_quest = await generate_random_task(class_, settings.model_tasks[class_.last_task_number - 1], message)
-
-            if not active_quest:
-                await message.answer("Следующее задание не найдено")
-                return
-
-            await message.answer("Перейти к следующему заданию?",
-                                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                                     InlineKeyboardButton(text="Да", callback_data=f"quest_{class_.last_task_number}_{active_quest.id}")
-                                 ]]))
-        else:
-            await message.answer(
-                f"Основные задания завершены!\n"
-                f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
-                f"или закончить квест",
-                reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Да", callback_data="additional_task_star"),
-                                                                   InlineKeyboardButton(text="Завершить", callback_data="end_quest")]])
+    if score_count == 0:
+        if message.text.lower() == data['quest'].answer.lower():
+            await message.answer("Правильно!")
+            await Score.create(
+                quest=data['quest'],
+                class_=class_,
+                score=getattr(ScoringRules, data['quest'].type)
             )
 
-        for user in await User.filter(sch_class=class_.id):
-            if quest_number <= len(settings.model_tasks):
-                if user.tg_id != message.from_user.id:
-                    await message.bot.send_message(
-                        chat_id=user.tg_id,
-                        text=f"Задание {quest_number + 1} из {len(settings.model_tasks)}\n\n"
-                        f"Кто-то уже решил задание, вы можете посмотреть следующее, нажмите на кнопку",
-                        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
-                            text="Получить задание", callback_data=f"quest_{class_.last_task_number}_{active_quest.id}")]])
-                    )
+            class_.last_task_number = quest_number + 1
+            await class_.save()
+            await state.clear()
+
+            if condition:
+                active_quest = await generate_random_task(class_, settings.model_tasks[class_.last_task_number - 1], message)
+
+                if not active_quest:
+                    await message.answer("Следующее задание не найдено")
+                    return
+
+                await message.answer("Перейти к следующему заданию?",
+                                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                                        InlineKeyboardButton(text="Да", callback_data=f"quest_{class_.last_task_number}_{active_quest.id}")
+                                    ]]))
             else:
-                if user.tg_id != message.from_user.id:
-                    await message.bot.send_message(
-                        chat_id=user.tg_id,
-                        text =f"Основные задания завершены!\n"
-                        f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
-                        f"или закончить квест",
-                        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Да", callback_data="additional_task_star"),
-                                                                        InlineKeyboardButton(text="Завершить", callback_data="end_quest")]])
-                    )
+                await message.answer(
+                    f"Основные задания завершены!\n"
+                    f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
+                    f"или закончить квест",
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Да", callback_data="additional_task_star"),
+                                                                    InlineKeyboardButton(text="Завершить", callback_data="end_quest")]])
+                )
+
+            for user in await User.filter(sch_class=class_.id):
+                if quest_number <= len(settings.model_tasks):
+                    if user.tg_id != message.from_user.id:
+                        await message.bot.send_message(
+                            chat_id=user.tg_id,
+                            text=f"Задание {quest_number + 1} из {len(settings.model_tasks)}\n\n"
+                            f"Кто-то уже решил задание, вы можете посмотреть следующее, нажмите на кнопку ниже",
+                            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
+                                text="Получить задание", callback_data=f"quest_{class_.last_task_number}_{active_quest.id}")]])
+                        )
+                else:
+                    if user.tg_id != message.from_user.id:
+                        await message.bot.send_message(
+                            chat_id=user.tg_id,
+                            text =f"Основные задания завершены!\n"
+                            f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
+                            f"или закончить квест",
+                            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Да", callback_data="additional_task_star"),
+                                                                            InlineKeyboardButton(text="Завершить", callback_data="end_quest")]])
+                        )
+        else:
+            await message.answer("Неправильно, попробуйте еще раз!")
     else:
-        await message.answer("Неправильно, попробуйте еще раз!")
+        await message.answer("Задание уже решено")
+        await state.clear()
 
 
 
