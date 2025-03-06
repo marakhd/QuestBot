@@ -55,6 +55,10 @@ async def generate_random_task(class_: Class, quest_type: str, event: CallbackQu
     quests = [quest for quest, _ in weighted_quests]
 
     active_quest = await anext((q for q in quests if not await Score.get_or_none(quest=q, class_=class_)), None)
+    await class_.update_or_create(id=class_.id, defaults={
+        "last_task": active_quest
+    })
+    
     return active_quest
 
 # Обработчик для команды /start
@@ -258,7 +262,7 @@ async def quest(callback: CallbackQuery, state: FSMContext):
     elif quest_type == "PIC":
         await callback.bot.send_chat_action(callback.from_user.id, ChatAction.UPLOAD_PHOTO)
         msg = await callback.message.answer("Загрузка...")
-        await callback.message.answer_photo(URLInputFile(active_quest.data), caption=f"""
+        await callback.message.answer_photo(URLInputFile(active_quest.data, timeout=60), caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
 {active_quest.text}\n\n
 Ответ: {active_quest.answer}
@@ -306,13 +310,15 @@ async def answer_quest(message: Message, state: FSMContext):
                 await message.answer(
                     f"Основные задания завершены!\n"
                     f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
-                    f"или закончить квест",
+                    f"или закончить квест\n\n"
+                    f"P.S. Вы можете получить дополнительные баллы (до 10 баллов) если напишите в описание к видео стихтворение начинающееся со строк:\n"
+                    f"<blockquote>Весна, моя весна...</blockquote>",
                     reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Да", callback_data="additional_task_star"),
                                                                     InlineKeyboardButton(text="Завершить", callback_data="end_quest")]])
                 )
 
             for user in await User.filter(sch_class=class_.id):
-                if quest_number <= len(settings.model_tasks):
+                if condition:
                     if user.tg_id != message.from_user.id:
                         await message.bot.send_message(
                             chat_id=user.tg_id,
@@ -327,7 +333,9 @@ async def answer_quest(message: Message, state: FSMContext):
                             chat_id=user.tg_id,
                             text =f"Основные задания завершены!\n"
                             f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
-                            f"или закончить квест",
+                            f"или закончить квест\n\n"
+                            f"P.S. Вы можете получить дополнительные баллы (до 10 баллов) если напишите в описание к видео стихтворение начинающееся со строк:\n"
+                            f"<blockquote>Весна, моя весна...</blockquote>",
                             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Да", callback_data="additional_task_star"),
                                                                             InlineKeyboardButton(text="Завершить", callback_data="end_quest")]])
                         )
