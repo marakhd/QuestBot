@@ -86,6 +86,9 @@ async def start(message: Message):
             kb.button(text="Перейти к вопросу", callback_data=f"quest_{class_.last_task_number}_{class_.last_task.id}")
             if not class_.capitan:
                 kb.button(text="Стать капитаном", callback_data="capitan_choice")
+            
+            if 
+            
             await message.answer(
                 f"Вы уже зарегистрированны в {class_.name}. Перейти к вопросу можно по кнопке.",
                 reply_markup=kb.as_markup(),
