@@ -41,7 +41,7 @@ class Class(Model):
 class Quest(Model):
     id = fields.BigIntField(pk=True)
     name = fields.CharField(max_length=255, unique=True)
-    data = fields.CharField(max_length=255, null=True)
+    data = fields.TextField(null=True)
     text = fields.TextField()
     answer = fields.TextField()
     type = fields.CharField(max_length=255)
