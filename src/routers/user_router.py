@@ -339,7 +339,7 @@ async def quest(callback: CallbackQuery, state: FSMContext):
         )
         msg = await callback.message.answer("Загрузка...")
         await msg.answer_audio(
-            URLInputFile(active_quest.data),
+            URLInputFile(active_quest.data, timeout=60),
             caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
 {active_quest.text}
@@ -351,7 +351,7 @@ async def quest(callback: CallbackQuery, state: FSMContext):
         )
         msg = await callback.message.answer("Загрузка...")
         await callback.message.answer_photo(
-            URLInputFile(active_quest.data, timeout=60),
+            URLInputFile(active_quest.data, timeout=90),
             caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
 {active_quest.text}
