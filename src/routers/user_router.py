@@ -7,7 +7,7 @@ from aiogram.enums import ChatAction
 
 import random
 from textwrap import dedent
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
 
 from tortoise.expressions import Q
 
@@ -82,6 +82,11 @@ async def start(message: Message):
         await (
             await message.answer("Если бот перестал работать - пропишите /start")
         ).pin()
+        await (
+            await message.answer(
+                "!!! Бот будет отключен в 15:00, вы должны успеть загрузить все ответы ДО этого времени!!!\n"
+            )
+        ).pin()
 
     if not user:
         await message.answer(
@@ -110,26 +115,27 @@ async def start(message: Message):
             if not class_.capitan:
                 kb.button(text="Стать капитаном", callback_data="capitan_choice")
 
-            if class_.last_task_number >= len(settings.model_tasks):
-                await message.answer(
-                    f"Основные задания завершены!\n"
-                    f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
-                    f"или закончить квест\n\n"
-                    f"P.S. Вы можете получить дополнительные баллы (до 10 баллов) если напишите в описание к видео стихтворение начинающееся со строк:\n"
-                    f"<blockquote>Весна, моя весна...</blockquote>",
-                    reply_markup=InlineKeyboardMarkup(
-                        inline_keyboard=[
-                            [
-                                InlineKeyboardButton(
-                                    text="Да", callback_data="additional_task_star"
-                                ),
-                                InlineKeyboardButton(
-                                    text="Завершить", callback_data="end_quest"
-                                ),
+            if class_.last_task_number == len(settings.model_tasks):
+                if class_.state_game == True:
+                    await message.answer(
+                        f"Основные задания завершены!\n"
+                        f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
+                        f"или закончить квест\n\n"
+                        f"P.S. Вы можете получить дополнительные баллы (до 10 баллов) если напишите в описание к видео стихтворение начинающееся со строк:\n"
+                        f"<blockquote>Весна, моя весна...</blockquote>",
+                        reply_markup=InlineKeyboardMarkup(
+                            inline_keyboard=[
+                                [
+                                    InlineKeyboardButton(
+                                        text="Да", callback_data="additional_task_star"
+                                    ),
+                                    InlineKeyboardButton(
+                                        text="Завершить", callback_data="end_quest"
+                                    ),
+                                ]
                             ]
-                        ]
-                    ),
-                )
+                        ),
+                    )
                 return
 
             await message.answer(
@@ -291,7 +297,6 @@ async def quest(callback: CallbackQuery, state: FSMContext):
 
     # if quest_number == 1 and not class_.last_task:
     #     await Timer.start_class_timer(class_.id)
-
 
     if not class_.capitan:
         await callback.answer("Капитан не выбран", show_alert=True)
