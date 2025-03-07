@@ -247,16 +247,14 @@ async def quest(callback: CallbackQuery, state: FSMContext):
     if quest_type in ["TEXT", "CROSSWORD"]:
         await callback.message.answer(f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
-{active_quest.text}\n\n
-Ответ: {active_quest.answer}
+{active_quest.text}
 """)
     elif quest_type == "MUSIC":
         await callback.bot.send_chat_action(callback.from_user.id, ChatAction.UPLOAD_VOICE)
         msg = await callback.message.answer("Загрузка...")
         await msg.answer_audio(URLInputFile(active_quest.data), caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
-{active_quest.text}\n\n
-Ответ: {active_quest.answer}
+{active_quest.text}
 """)
         await msg.delete()
     elif quest_type == "PIC":
@@ -264,8 +262,7 @@ async def quest(callback: CallbackQuery, state: FSMContext):
         msg = await callback.message.answer("Загрузка...")
         await callback.message.answer_photo(URLInputFile(active_quest.data, timeout=60), caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
-{active_quest.text}\n\n
-Ответ: {active_quest.answer}
+{active_quest.text}
 """)
         await msg.delete()
 
