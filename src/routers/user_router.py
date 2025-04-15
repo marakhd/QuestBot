@@ -332,23 +332,33 @@ async def quest(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer(
             f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
+<<<<<<< HEAD
 {active_quest.text}\n\n
 Ответ: {active_quest.correct_answer}
 """
         )
+=======
+{active_quest.text}
+""")
+>>>>>>> b45d3e64dae9fc436503e02860cbd5850f8994bc
     elif quest_type == "MUSIC":
         await callback.bot.send_chat_action(
             callback.from_user.id, ChatAction.UPLOAD_VOICE
         )
         msg = await callback.message.answer("Загрузка...")
         await msg.answer_audio(
-            URLInputFile(active_quest.data),
+            URLInputFile(active_quest.data, timeout=60),
             caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
+<<<<<<< HEAD
 {active_quest.text}\n\n
 Ответ: {active_quest.correct_answer}
 """,
         )
+=======
+{active_quest.text}
+""")
+>>>>>>> b45d3e64dae9fc436503e02860cbd5850f8994bc
         await msg.delete()
     elif quest_type == "PIC":
         await callback.bot.send_chat_action(
@@ -356,13 +366,18 @@ async def quest(callback: CallbackQuery, state: FSMContext):
         )
         msg = await callback.message.answer("Загрузка...")
         await callback.message.answer_photo(
-            URLInputFile(active_quest.data, timeout=60),
+            URLInputFile(active_quest.data, timeout=90),
             caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
+<<<<<<< HEAD
 {active_quest.text}\n\n
 Ответ: {active_quest.correct_answer}
 """,
         )
+=======
+{active_quest.text}
+""")
+>>>>>>> b45d3e64dae9fc436503e02860cbd5850f8994bc
         await msg.delete()
 
 
