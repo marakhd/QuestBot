@@ -7,6 +7,7 @@ from aiogram.enums import ChatAction
 
 import random
 from textwrap import dedent
+
 # from datetime import datetime, timedelta
 
 from tortoise.expressions import Q
@@ -82,11 +83,11 @@ async def start(message: Message):
         await (
             await message.answer("Если бот перестал работать - пропишите /start")
         ).pin()
-        await (
-            await message.answer(
-                "!!! Бот будет отключен в 15:00, вы должны успеть загрузить все ответы ДО этого времени!!!\n"
-            )
-        ).pin()
+        # await (
+        #     await message.answer(
+        #         "!!! Бот будет отключен в 15:00, вы должны успеть загрузить все ответы ДО этого времени!!!\n"
+        #     )
+        # ).pin()
 
     if not user:
         await message.answer(
@@ -332,7 +333,7 @@ async def quest(callback: CallbackQuery, state: FSMContext):
             f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
 {active_quest.text}\n\n
-Ответ: {active_quest.answer}
+Ответ: {active_quest.correct_answer}
 """
         )
     elif quest_type == "MUSIC":
@@ -345,7 +346,7 @@ async def quest(callback: CallbackQuery, state: FSMContext):
             caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
 {active_quest.text}\n\n
-Ответ: {active_quest.answer}
+Ответ: {active_quest.correct_answer}
 """,
         )
         await msg.delete()
@@ -359,7 +360,7 @@ async def quest(callback: CallbackQuery, state: FSMContext):
             caption=f"""
 Задание {quest_number} из {len(settings.model_tasks)}\n\n
 {active_quest.text}\n\n
-Ответ: {active_quest.answer}
+Ответ: {active_quest.correct_answer}
 """,
         )
         await msg.delete()

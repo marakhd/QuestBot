@@ -28,7 +28,9 @@ class Class(Model):
 
     state_game = fields.BooleanField(default=False)
     last_task_number = fields.IntField(default=1)
-    last_task = fields.ForeignKeyField("models.Quest", related_name="last_task", null=True)
+    last_task = fields.ForeignKeyField(
+        "models.Quest", related_name="last_task", null=True
+    )
 
     start_time = fields.DatetimeField(null=True)
 
@@ -43,13 +45,13 @@ class Quest(Model):
     name = fields.CharField(max_length=255, unique=True)
     data = fields.TextField(null=True)
     text = fields.TextField()
-    answer = fields.TextField()
-    type = fields.CharField(max_length=255)
+    correct_answer = fields.TextField()
+    answer_type = fields.CharField(max_length=255)
     for_class = fields.ForeignKeyField("models.Class", related_name="quests", null=True)
     is_active = fields.BooleanField(default=True)
 
     class Meta:
-        table = "quests"
+        table = "questions"
 
 
 class Score(Model):
@@ -57,8 +59,12 @@ class Score(Model):
 
     score = fields.IntField(default=0)
 
-    quest = fields.ForeignKeyField("models.Quest", related_name="points", on_delete="RESTRICT")
-    class_ = fields.ForeignKeyField("models.Class", related_name="points", on_delete="CASCADE")
+    quest = fields.ForeignKeyField(
+        "models.Quest", related_name="points", on_delete="RESTRICT"
+    )
+    class_ = fields.ForeignKeyField(
+        "models.Class", related_name="points", on_delete="CASCADE"
+    )
 
     class Meta:
         table = "scores"
