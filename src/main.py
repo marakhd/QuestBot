@@ -1,5 +1,6 @@
 from asyncio import run
 import logging
+from sys import exit as sys_exit
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -28,4 +29,4 @@ if __name__ == "__main__":
     try:
         run(main())
     except (KeyboardInterrupt, SystemExit):
-        pass
+        sys_exit(0)

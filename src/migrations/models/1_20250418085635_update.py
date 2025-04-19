@@ -10,13 +10,13 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
     "last_task_number" INT NOT NULL  DEFAULT 1,
     "start_time" TIMESTAMP,
     "is_active" INT NOT NULL  DEFAULT 1,
-    "capitan_id" BIGINT REFERENCES "users" ("id") ON DELETE CASCADE,
     "last_task_id" BIGINT REFERENCES "questions" ("id") ON DELETE CASCADE
 );
         CREATE TABLE IF NOT EXISTS "questions" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     "name" VARCHAR(255) NOT NULL UNIQUE,
     "data" TEXT,
+    "grade_group" VARCHAR(25) NOT NULL,
     "text" TEXT NOT NULL,
     "correct_answer" TEXT NOT NULL,
     "answer_type" VARCHAR(255) NOT NULL,

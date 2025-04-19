@@ -34,9 +34,9 @@ async def create_class_selection_kb():
 start_text = lambda message: dedent(
     f"""Здравствуйте, {message.from_user.full_name}.
 
-Вы попали на квест <code>Весенний Brain Rush</code>
+Вы попали на квест <code>Победа 890</code>
 
-Чтобы продолжить выберите свой класс:"""
+Чтобы продолжить выберите свой уровень:"""
 )
 
 
@@ -71,10 +71,8 @@ async def generate_random_task(
 
     return active_quest
 
-
-# Обработчик для команды /start
 @router.message(CommandStart())
-async def start(message: Message):
+async def start(message: Message)
     user = await User.get_or_none(
         tg_id=message.from_user.id,
     ).prefetch_related("sch_class")
@@ -91,63 +89,89 @@ async def start(message: Message):
 
     if not user:
         await message.answer(
-            start_text(message), reply_markup=await create_class_selection_kb()
+            start_text(message), reply_markup=(InlineKeyboardBuilder()
+                                               .button(text="НАЧАЛКА", callback_data="choice-grade_primary")
+                                               .button(text="СРЕДНЯЯ ИЛИ СТАРШАЯ", callback_data="choice-grade_high")
+                                               .adjust(1)
+                                               .as_markup()
         )
-    else:
-        class_: Class = user.sch_class
-        await class_.fetch_related("last_task")
 
-        if not class_.last_task:
-            task = await generate_random_task(
-                class_, settings.model_tasks[class_.last_task_number - 1], message
-            )
-            if task:
-                class_.last_task = task
-                await class_.save()
-            else:
-                message.answer("Квест завершен")
+# # Обработчик для команды /start
+# @router.message(CommandStart())
+# async def start(message: Message):
+#     user = await User.get_or_none(
+#         tg_id=message.from_user.id,
+#     ).prefetch_related("sch_class")
 
-        if class_:
-            kb = InlineKeyboardBuilder()
-            kb.button(
-                text="Перейти к вопросу",
-                callback_data=f"quest_{class_.last_task_number}_{class_.last_task.id}",
-            )
-            if not class_.capitan:
-                kb.button(text="Стать капитаном", callback_data="capitan_choice")
+#     if not (await message.bot.get_chat(message.chat.id)).pinned_message:
+#         await (
+#             await message.answer("Если бот перестал работать - пропишите /start")
+#         ).pin()
+#         # await (
+#         #     await message.answer(
+#         #         "!!! Бот будет отключен в 15:00, вы должны успеть загрузить все ответы ДО этого времени!!!\n"
+#         #     )
+#         # ).pin()
 
-            if class_.last_task_number == len(settings.model_tasks):
-                if class_.state_game == True:
-                    await message.answer(
-                        f"Основные задания завершены!\n"
-                        f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
-                        f"или закончить квест\n\n"
-                        f"P.S. Вы можете получить дополнительные баллы (до 10 баллов) если напишите в описание к видео стихтворение начинающееся со строк:\n"
-                        f"<blockquote>Весна, моя весна...</blockquote>",
-                        reply_markup=InlineKeyboardMarkup(
-                            inline_keyboard=[
-                                [
-                                    InlineKeyboardButton(
-                                        text="Да", callback_data="additional_task_star"
-                                    ),
-                                    InlineKeyboardButton(
-                                        text="Завершить", callback_data="end_quest"
-                                    ),
-                                ]
-                            ]
-                        ),
-                    )
-                return
+#     if not user:
+#         await message.answer(
+#             start_text(message), reply_markup=await create_class_selection_kb()
+#         )
+#     else:
+#         class_: Class = user.sch_class
+#         await class_.fetch_related("last_task")
 
-            await message.answer(
-                f"Вы уже зарегистрированны в {class_.name}. Перейти к вопросу можно по кнопке.",
-                reply_markup=kb.as_markup(),
-            )
-        else:
-            await message.answer(
-                "Вы не зарегистрированы ни в одном классе. Выберите класс из списка ниже.",
-                reply_markup=await create_class_selection_kb(),
-            )
+#         if not class_.last_task:
+#             task = await generate_random_task(
+#                 class_, settings.model_tasks[class_.last_task_number - 1], message
+#             )
+#             if task:
+#                 class_.last_task = task
+#                 await class_.save()
+#             else:
+#                 message.answer("Квест завершен")
+
+#         if class_:
+#             kb = InlineKeyboardBuilder()
+#             kb.button(
+#                 text="Перейти к вопросу",
+#                 callback_data=f"quest_{class_.last_task_number}_{class_.last_task.id}",
+#             )
+#             if not class_.capitan:
+#                 kb.button(text="Стать капитаном", callback_data="capitan_choice")
+
+#             if class_.last_task_number == len(settings.model_tasks):
+#                 if class_.state_game == True:
+#                     await message.answer(
+#                         f"Основные задания завершены!\n"
+#                         f"Вы можете перейти на задание со звездочкой (Можно получить до {int(ScoringRules.VIDEO)} баллов) "
+#                         f"или закончить квест\n\n"
+#                         f"P.S. Вы можете получить дополнительные баллы (до 10 баллов) если напишите в описание к видео стихтворение начинающееся со строк:\n"
+#                         f"<blockquote>Весна, моя весна...</blockquote>",
+#                         reply_markup=InlineKeyboardMarkup(
+#                             inline_keyboard=[
+#                                 [
+#                                     InlineKeyboardButton(
+#                                         text="Да", callback_data="additional_task_star"
+#                                     ),
+#                                     InlineKeyboardButton(
+#                                         text="Завершить", callback_data="end_quest"
+#                                     ),
+#                                 ]
+#                             ]
+#                         ),
+#                     )
+#                 return
+
+#             await message.answer(
+#                 f"Вы уже зарегистрированны в {class_.name}. Перейти к вопросу можно по кнопке.",
+#                 reply_markup=kb.as_markup(),
+#             )
+#         else:
+#             await message.answer(
+#                 "Вы не зарегистрированы ни в одном классе. Выберите класс из списка ниже.",
+#                 reply_markup=await create_class_selection_kb(),
+#             )
 
 
 @router.message(Command("service"))
@@ -178,12 +202,6 @@ async def select_class(callback: CallbackQuery):
 
     await callback.message.edit_text(
         f"Вы выбрали класс {class_.name}\n\n"
-        + (
-            f'Капитан - <a href="tg://user?id={capitan.tg_id}">{capitan.full_name}</a> '
-            f'({f"@{capitan.tg_username}" if capitan.tg_username else "Юзернейма нет"})\n\n'
-            if capitan
-            else "Капитана нет!\n"
-        )
         + f"Состояние: {"запущен" if class_.state_game else "не запущен"}",
         reply_markup=kb.as_markup(),
     )
@@ -243,46 +261,6 @@ async def start_quest(callback: CallbackQuery):
 
 Приступим?""",
         reply_markup=kb.as_markup(),
-    )
-
-
-@router.callback_query(F.data == "capitan_choice")
-async def capitan_choice(callback: CallbackQuery):
-    await callback.answer()
-
-    await callback.message.edit_text(
-        "Для вашего класса пока не выбран капитан, и именно ты можешь им стать - просто нажми кнопку ниже...",
-        reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        callback_data="capitan_selected", text="Стать капитаном"
-                    )
-                ]
-            ]
-        ),
-    )
-
-
-@router.callback_query(F.data == "capitan_selected")
-async def capitan_selected(callback: CallbackQuery):
-    user = await User.get(tg_id=callback.from_user.id).prefetch_related("sch_class")
-    class_: Class = user.sch_class
-    await class_.fetch_related("last_task")
-
-    await Class.update_or_create(
-        id=class_.id, defaults={"capitan": user, "state_game": True}
-    )
-
-    await callback.answer()
-    await callback.message.edit_text(
-        "Вы стали капитаном класса!",
-        reply_markup=InlineKeyboardBuilder()
-        .button(
-            text="Перейти к квестам",
-            callback_data=f"quest_{class_.last_task_number}_{class_.last_task.id}",
-        )
-        .as_markup(),
     )
 
 

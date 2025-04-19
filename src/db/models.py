@@ -21,9 +21,7 @@ class User(Model):
 class Class(Model):
     id = fields.BigIntField(pk=True)
     name = fields.CharField(max_length=255, unique=True)
-    capitan = fields.ForeignKeyField("models.User", related_name="capitan", null=True)
 
-    users = fields.ReverseRelation["User"]
     quests = fields.ReverseRelation["Quest"]
 
     state_game = fields.BooleanField(default=False)
@@ -44,6 +42,7 @@ class Quest(Model):
     id = fields.BigIntField(pk=True)
     name = fields.CharField(max_length=255, unique=True)
     data = fields.TextField(null=True)
+    grade_group = fields.CharField(max_length=25)
     text = fields.TextField()
     correct_answer = fields.TextField()
     answer_type = fields.CharField(max_length=255)
