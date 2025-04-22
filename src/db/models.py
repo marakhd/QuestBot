@@ -8,6 +8,16 @@ class User(Model):
     tg_id = fields.BigIntField(unique=True)
     full_name = fields.CharField(max_length=255, null=True)
 
+    last_task_number = fields.IntField(default=1)
+    last_task = fields.ForeignKeyField(
+        "models.Quest", related_name="last_task", null=True
+    )
+
+    quests: fields.ReverseRelation["Quest"]
+
+    start_time = fields.DatetimeField(null=True)
+    end_time = fields.DatetimeField(null=True)
+
     sch_class = fields.ForeignKeyField(
         "models.Class",  # Связь с таблицей classes
         related_name="users",  # Позволяет получать список пользователей через `class_obj.users.all()`
@@ -22,15 +32,7 @@ class Class(Model):
     id = fields.BigIntField(pk=True)
     name = fields.CharField(max_length=255, unique=True)
 
-    quests = fields.ReverseRelation["Quest"]
-
-    state_game = fields.BooleanField(default=False)
-    last_task_number = fields.IntField(default=1)
-    last_task = fields.ForeignKeyField(
-        "models.Quest", related_name="last_task", null=True
-    )
-
-    start_time = fields.DatetimeField(null=True)
+    users: fields.ReverseRelation["User"]
 
     is_active = fields.BooleanField(default=True, null=False)
 
@@ -68,6 +70,8 @@ class Score(Model):
     id = fields.BigIntField(pk=True)
 
     score = fields.IntField(default=0)
+
+    answer = fields.TextField(null=True)
 
     quest = fields.ForeignKeyField(
         "models.Quest", related_name="points", on_delete="RESTRICT"

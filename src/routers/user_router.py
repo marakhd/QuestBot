@@ -59,36 +59,36 @@ start_text = lambda message: dedent(
 )
 
 
-async def generate_random_task(
-    class_: Class, quest_type: str, event: CallbackQuery | Message
-) -> Quest | None:
-    quests = await Quest.filter(
-        (Q(for_class__id=class_.id) | Q(for_class=None)),
-        type=quest_type,
-        is_active=True,
-    ).order_by("for_class__name")
+# async def generate_random_task(
+#     class_: Class, quest_type: str, event: CallbackQuery | Message
+# ) -> Quest | None:
+#     quests = await Quest.filter(
+#         (Q(for_class__id=class_.id) | Q(for_class=None)),
+#         type=quest_type,
+#         is_active=True,
+#     ).order_by("for_class__name")
 
-    if not quests:
-        await event.answer("Задания не найдены")
-        return
+#     if not quests:
+#         await event.answer("Задания не найдены")
+#         return
 
-    # Присваиваем "вес" заданиям: 1 для специфичных, 0 для общих
-    weighted_quests = [
-        (quest, 1 if quest.for_class_id == class_.id else 0) for quest in quests
-    ]
-    # Перемешиваем с учётом веса (приоритетные задания перемешиваются только между собой)
-    random.shuffle(weighted_quests)
-    # Сортируем так, чтобы приоритетные оставались сверху
-    weighted_quests.sort(key=lambda x: x[1], reverse=True)
-    # Извлекаем задания после сортировки
-    quests = [quest for quest, _ in weighted_quests]
+#     # Присваиваем "вес" заданиям: 1 для специфичных, 0 для общих
+#     weighted_quests = [
+#         (quest, 1 if quest.for_class_id == class_.id else 0) for quest in quests
+#     ]
+#     # Перемешиваем с учётом веса (приоритетные задания перемешиваются только между собой)
+#     random.shuffle(weighted_quests)
+#     # Сортируем так, чтобы приоритетные оставались сверху
+#     weighted_quests.sort(key=lambda x: x[1], reverse=True)
+#     # Извлекаем задания после сортировки
+#     quests = [quest for quest, _ in weighted_quests]
 
-    active_quest = await anext(
-        (q for q in quests if not await Score.get_or_none(quest=q, class_=class_)), None
-    )
-    await class_.update_or_create(id=class_.id, defaults={"last_task": active_quest})
+    # active_quest = await anext(
+    #     (q for q in quests if not await Score.get_or_none(quest=q, class_=class_)), None
+    # )
+#     await class_.update_or_create(id=class_.id, defaults={"last_task": active_quest})
 
-    return active_quest
+#     return active_quest
 
 
 @router.message(Command("service"))
@@ -130,6 +130,7 @@ async def start(message: Message):
                 .as_markup()
             ),
         )
+    else: ...
 
 
 @router.callback_query(F.data.startswith("choice-grade_"))
@@ -153,7 +154,7 @@ async def choice_grade(callback: CallbackQuery):
             )
         elif grade == "high":
             await callback.message.edit_text(
-                "Выберите класс или поменяйте свой выбор",
+                "Вы выбрали среднюю или старшую школу! Выберите класс или поменяйте свой выбор...",
                 reply_markup=await create_class_selection_kb(),
             )
 
