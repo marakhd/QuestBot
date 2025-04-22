@@ -53,6 +53,15 @@ class Quest(Model):
         table = "questions"
 
 
+class OptionQuest(Model):
+    question_id = fields.ForeignKeyField("models.Quest", related_name="options")
+    options = fields.CharField(max_length=255)
+    option_text = fields.TextField()
+
+    class Meta:
+        table = "options"
+
+
 class Score(Model):
     id = fields.BigIntField(pk=True)
 
@@ -64,6 +73,8 @@ class Score(Model):
     class_ = fields.ForeignKeyField(
         "models.Class", related_name="points", on_delete="CASCADE"
     )
+
+    user = fields.ForeignKeyField("models.User", related_name="scores", null=True)
 
     class Meta:
         table = "scores"

@@ -71,8 +71,9 @@ async def generate_random_task(
 
     return active_quest
 
+
 @router.message(CommandStart())
-async def start(message: Message)
+async def start(message: Message):
     user = await User.get_or_none(
         tg_id=message.from_user.id,
     ).prefetch_related("sch_class")
@@ -89,12 +90,28 @@ async def start(message: Message)
 
     if not user:
         await message.answer(
-            start_text(message), reply_markup=(InlineKeyboardBuilder()
-                                               .button(text="НАЧАЛКА", callback_data="choice-grade_primary")
-                                               .button(text="СРЕДНЯЯ ИЛИ СТАРШАЯ", callback_data="choice-grade_high")
-                                               .adjust(1)
-                                               .as_markup()
+            start_text(message),
+            reply_markup=(
+                InlineKeyboardBuilder()
+                .button(text="НАЧАЛКА", callback_data="choice-grade_primary")
+                .button(text="СРЕДНЯЯ ИЛИ СТАРШАЯ", callback_data="choice-grade_high")
+                .adjust(1)
+                .as_markup()
+            ),
         )
+
+
+@router.callback_query(F.data.startswith("choice-grade_"))
+async def choice_grade(callback: CallbackQuery):
+    grade = callback.data.split("_")[1]
+
+    if grade == "primary":
+        ...
+    elif grade == "high":
+        await callback.message.answer(
+            "Выберите класс", reply_markup=await create_class_selection_kb()
+        )
+
 
 # # Обработчик для команды /start
 # @router.message(CommandStart())
@@ -176,7 +193,7 @@ async def start(message: Message)
 
 @router.message(Command("service"))
 async def service(message: Message):
-    user = await User.get(
+    user = await User.get_or_none(
         tg_id=message.from_user.id,
     )
     await message.answer(
@@ -224,7 +241,7 @@ async def start_quest(callback: CallbackQuery):
 
     if not class_.last_task:
         task = await generate_random_task(
-            class_, settings.model_tasks[class_.last_task_number - 1], callback
+            class_, settings.model_tasks_primary[class_.last_task_number - 1], callback
         )
         if task:
             class_.last_task = task
@@ -253,8 +270,7 @@ async def start_quest(callback: CallbackQuery):
     await callback.answer()
 
     await callback.message.edit_text(
-        f"""Вы выбрали {class_.name} класс. Начинаем квест!
-
+        """
 Вам предстоит выполнить {len(settings.model_tasks)} основных заданий, и 2 дополнительных.
 
 За дополнительные задания можно получить до 30 баллов.
@@ -272,7 +288,7 @@ async def quest(callback: CallbackQuery, state: FSMContext):
 
     user = await User.get(tg_id=callback.from_user.id).prefetch_related("sch_class")
     class_: Class = user.sch_class
-    quest_type = settings.model_tasks[quest_number - 1]
+    quest_type = settings.model_tasks_primary[quest_number - 1]
 
     # if quest_number == 1 and not class_.last_task:
     #     await Timer.start_class_timer(class_.id)
@@ -284,7 +300,7 @@ async def quest(callback: CallbackQuery, state: FSMContext):
     # Если quest_id не передан, выбираем случайный активный квест
     if not quest_id:
         active_quest = await generate_random_task(
-            class_, settings.model_tasks[class_.last_task_number - 1], callback
+            class_, settings.model_tasks_primary[class_.last_task_number - 1], callback
         )
         if not active_quest:
             callback.answer("Квест завершен, доступных заданий не осталось")
@@ -309,16 +325,11 @@ async def quest(callback: CallbackQuery, state: FSMContext):
     if quest_type in ["TEXT", "CROSSWORD"]:
         await callback.message.answer(
             f"""
-Задание {quest_number} из {len(settings.model_tasks)}\n\n
-<<<<<<< HEAD
+Задание {quest_number} из {len(settings.model_tasks_primary)}\n\n
 {active_quest.text}\n\n
 Ответ: {active_quest.correct_answer}
 """
         )
-=======
-{active_quest.text}
-""")
->>>>>>> b45d3e64dae9fc436503e02860cbd5850f8994bc
     elif quest_type == "MUSIC":
         await callback.bot.send_chat_action(
             callback.from_user.id, ChatAction.UPLOAD_VOICE
@@ -327,16 +338,11 @@ async def quest(callback: CallbackQuery, state: FSMContext):
         await msg.answer_audio(
             URLInputFile(active_quest.data, timeout=60),
             caption=f"""
-Задание {quest_number} из {len(settings.model_tasks)}\n\n
-<<<<<<< HEAD
+Задание {quest_number} из {len(settings.model_tasks_primary)}\n\n
 {active_quest.text}\n\n
 Ответ: {active_quest.correct_answer}
 """,
         )
-=======
-{active_quest.text}
-""")
->>>>>>> b45d3e64dae9fc436503e02860cbd5850f8994bc
         await msg.delete()
     elif quest_type == "PIC":
         await callback.bot.send_chat_action(
@@ -346,16 +352,11 @@ async def quest(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer_photo(
             URLInputFile(active_quest.data, timeout=90),
             caption=f"""
-Задание {quest_number} из {len(settings.model_tasks)}\n\n
-<<<<<<< HEAD
+Задание {quest_number} из {len(settings.model_tasks_primary)}\n\n
 {active_quest.text}\n\n
 Ответ: {active_quest.correct_answer}
 """,
         )
-=======
-{active_quest.text}
-""")
->>>>>>> b45d3e64dae9fc436503e02860cbd5850f8994bc
         await msg.delete()
 
 
@@ -366,7 +367,7 @@ async def answer_quest(message: Message, state: FSMContext):
     user = await User.get(tg_id=message.from_user.id).prefetch_related("sch_class")
     class_: Class = user.sch_class
 
-    condition = quest_number < len(settings.model_tasks)
+    condition = quest_number < len(settings.model_tasks_primary)
 
     score_count = await Score.filter(class_=class_, quest=data["quest"]).count()
 
@@ -385,7 +386,9 @@ async def answer_quest(message: Message, state: FSMContext):
 
             if condition:
                 active_quest = await generate_random_task(
-                    class_, settings.model_tasks[class_.last_task_number - 1], message
+                    class_,
+                    settings.model_tasks_primary[class_.last_task_number - 1],
+                    message,
                 )
 
                 if not active_quest:
@@ -431,7 +434,7 @@ async def answer_quest(message: Message, state: FSMContext):
                     if user.tg_id != message.from_user.id:
                         await message.bot.send_message(
                             chat_id=user.tg_id,
-                            text=f"Задание {quest_number + 1} из {len(settings.model_tasks)}\n\n"
+                            text=f"Задание {quest_number + 1} из {len(settings.model_tasks_primary)}\n\n"
                             f"Кто-то уже решил задание, вы можете посмотреть следующее, нажмите на кнопку ниже",
                             reply_markup=InlineKeyboardMarkup(
                                 inline_keyboard=[
