@@ -46,15 +46,17 @@ class Quest(Model):
     text = fields.TextField()
     correct_answer = fields.TextField()
     answer_type = fields.CharField(max_length=255)
-    for_class = fields.ForeignKeyField("models.Class", related_name="quests", null=True)
+    # for_class = fields.ForeignKeyField("models.Class", related_name="quests", null=True)
     is_active = fields.BooleanField(default=True)
+
+    options: fields.ReverseRelation["OptionQuest"]
 
     class Meta:
         table = "questions"
 
 
 class OptionQuest(Model):
-    question_id = fields.ForeignKeyField("models.Quest", related_name="options")
+    question = fields.ForeignKeyField("models.Quest", related_name="options")
     options = fields.CharField(max_length=255)
     option_text = fields.TextField()
 

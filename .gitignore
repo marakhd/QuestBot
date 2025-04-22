@@ -1,3 +1,4 @@
 .env
 .venv/
 13_20250302181440_update.py
+migrations/

@@ -21,30 +21,44 @@ class Settings(BaseSettings):
     DB_PORT: int
     DB_NAME: str
 
-    model_tasks_primary: ClassVar[list[str]] = [
+    MODEL_TASKS_PRIMARY: ClassVar[list[str]] = [
         "CROSSWORD",
+        "MUSIC",
+        # "PIC",
         "TEXT",
-        "MUSIC",
-        "MUSIC",
-        "PIC",
-        "PIC",
+        "TEXT",
+        "TEXT",
+        "TEXT",
+        "TEXT",
+        "TEXT",
+        "TEXT",
         "TEXT",
         "TEXT",
         "TEXT",
     ]
-    model_tasks_high: ClassVar[list[str]] = [
+    MODEL_TASKS_HIGH: ClassVar[list[str]] = [
         "CROSSWORD",
         "TEXT",
         "MUSIC",
-        "MUSIC",
-        "PIC",
-        "PIC",
+        # "PIC",
+        # "TEXT",
+        # "TEXT",
+        # "TEXT",
+        # "TEXT",
+        # "TEXT",
+        # "TEXT",
+        # "TEXT",
+        "TEXT",
+        "TEXT",
+        "TEXT",
         "TEXT",
         "TEXT",
         "TEXT",
     ]
 
     ADMINS: ClassVar[list[int]] = [2075302695]
+
+    STATIC_DIR: ClassVar[Path] = DIR / "static"
 
     # @property
     # def URI_DB(self) -> str:
@@ -76,4 +90,3 @@ AERICH_CONFIG: dict = {
         }
     },
 }
-

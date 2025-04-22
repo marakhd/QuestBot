@@ -17,9 +17,9 @@ dp = Dispatcher()
 async def main():
     await init_db()
     try:
-        from routers import user_router
+        from routers import user_router, primary_grade_router, high_grade_router
 
-        dp.include_router(user_router)
+        dp.include_routers(high_grade_router, primary_grade_router, user_router,)
         await dp.start_polling(bot)
     finally:
         await close_db()

@@ -7,4 +7,6 @@ class QuestState(StatesGroup):
 
 class AdditionalTask(StatesGroup):
     download_video = State()
-    
+
+class PrimarySchoolState(StatesGroup):
+    answer = State()
