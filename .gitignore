@@ -1,4 +1,4 @@
 .env
 .venv/
-13_20250302181440_update.py
+__pycache__/
 migrations/
