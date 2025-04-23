@@ -77,10 +77,10 @@ class Score(Model):
         "models.Quest", related_name="points", on_delete="RESTRICT"
     )
     class_ = fields.ForeignKeyField(
-        "models.Class", related_name="points", on_delete="CASCADE"
+        "models.Class", related_name="points", on_delete="CASCADE", null=True
     )
 
-    user = fields.ForeignKeyField("models.User", related_name="scores", null=True)
+    user = fields.ForeignKeyField("models.User", related_name="scores")
 
     class Meta:
         table = "scores"

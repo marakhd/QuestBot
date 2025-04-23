@@ -37,7 +37,6 @@ class Settings(BaseSettings):
         "TEXT",
     ]
     MODEL_TASKS_HIGH: ClassVar[list[str]] = [
-        "CROSSWORD",
         "TEXT",
         "MUSIC",
         # "PIC",
