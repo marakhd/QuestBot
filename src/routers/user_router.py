@@ -24,7 +24,7 @@ from utils import Timer
 from config import settings
 from db import User, Class, Quest, Score
 
-from states import AdditionalTask, QuestState
+# from states import AdditionalTask, QuestState
 
 router = Router()
 
@@ -53,7 +53,7 @@ async def create_class_selection_kb():
 start_text = lambda message: dedent(
     f"""Здравствуйте, {message.from_user.full_name}.
 
-Вы попали на квест <code>Победа 890</code>
+Вы попали на квест <code>Победа 80</code>
 
 Чтобы продолжить выберите свой уровень:"""
 )
