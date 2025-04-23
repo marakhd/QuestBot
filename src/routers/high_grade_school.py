@@ -8,6 +8,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.enums import ChatAction
 
+from tortoise.expressions import Q
+
 from db import Class, User, Quest, Score
 from config import settings
 from states import HighSchoolState
@@ -18,9 +20,14 @@ router = Router()
 async def generate_random_task(
     user: Class,  # , event: CallbackQuery | Message
 ) -> Quest | None:
+    quest_type = settings.MODEL_TASKS_HIGH[user.last_task_number - 1]
     quests = await Quest.filter(
+        (
+            (Q(answer_type="TEXT") | Q(answer_type="CHOICE"))
+            if quest_type == "TEXT"
+            else Q(answer_type=quest_type)
+        ),
         grade_group="5-11",
-        answer_type=settings.MODEL_TASKS_HIGH[user.last_task_number - 1],
         is_active=True,
     ).all()
     
@@ -159,7 +166,7 @@ async def quest_high(callback: CallbackQuery, state: FSMContext):
                 else URLInputFile(active_quest.data, timeout=60)
             ),
             caption=f"""
-Задание {quest_number} из {len(settings.model_tasks_high)}\n\n
+Задание {quest_number} из {len(settings.MODEL_TASKS_HIGH)}\n\n
 {active_quest.text}\n\n
 Ответ: <code>{active_quest.correct_answer}</code>
 """,
@@ -175,7 +182,7 @@ async def quest_high(callback: CallbackQuery, state: FSMContext):
                 else URLInputFile(active_quest.data, timeout=90)
             ),
             caption=f"""
-Задание {quest_number} из {len(settings.model_tasks_high)}\n
+Задание {quest_number} из {len(settings.MODEL_TASKS_HIGH)}\n
 {active_quest.text}\n
 Ответ: <code>{active_quest.correct_answer}</code>
 """,
@@ -212,36 +219,48 @@ async def answer_high(update: CallbackQuery | Message, state: FSMContext):
     # user: User = await User.get(tg_id=update.from_user.id)
     user: User = data.get("user", await User.get(tg_id=update.from_user.id))
 
-    if not quest and quest_number:
+    if not quest and not quest_number:
         update.answer("Ошибка", show_alert=True)
         return
 
     message: Message = update.message if isinstance(update, CallbackQuery) else update
-    text = message.text if isinstance(update, Message) else update.data
+    text: str = message.text if isinstance(update, Message) else update.data.replace("answer_high_", "")
 
-    if quest.correct_answer.lower() == text.replace("answer_primary_", "").lower():
+    is_decided = False
+
+    if quest.correct_answer.lower() == text.lower() or text.lower().startswith(quest.correct_answer.lower()):
         if len(settings.MODEL_TASKS_HIGH) == quest_number:
             await message.answer("✅ Вы завершили квест!")
             await state.clear()
             user.end_time = datetime.now()
             await user.save()
             return
+        
+        is_decided = True
 
-        await Score.create(
-            quest_id=quest.id,
-            user_id=user.id,
-            class_=await user.sch_class.first(),
-            score=1,
-        )
+    await Score.create(
+        quest_id=quest.id,
+        user_id=user.id,
+        class_=await user.sch_class.first(),
+        score=1,
+        is_decided=is_decided,
+        answer=text,
+    )
 
-        kb = InlineKeyboardBuilder().button(
-            text="Следующее задание",
-            callback_data=f"quest_{quest_number + 1}",
-        )
-        try:
-            await message.edit_text("✅ Правильно!", reply_markup=kb.as_markup())
-        except TelegramBadRequest:
-            await message.answer("✅ Правильно!", reply_markup=kb.as_markup())
+    user.last_task_number += 1
+    await user.save()
+
+    kb = InlineKeyboardBuilder().button(
+        text="Следующее задание",
+        callback_data=f"quest_{quest_number + 1}",
+    )
+    try:
+        if isinstance(update, CallbackQuery):
+            await message.edit_text("✅ Ответ введен!", reply_markup=kb.as_markup())
+        else:
+            await message.edit_text("✅ Ответ введен!", reply_markup=kb.as_markup())
+    except TelegramBadRequest:
+        await message.answer("✅ Ответ введен!", reply_markup=kb.as_markup())
 
     await state.set_data({"quest": None, "quest_number": None})
 
