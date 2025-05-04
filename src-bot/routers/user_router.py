@@ -130,7 +130,7 @@ async def start(message: Message):
                 .as_markup()
             ),
         )
-    else: message.answer("Вы завершили квест!")
+    else: await message.answer("Вы завершили квест!")
 
 
 @router.callback_query(F.data.startswith("choice-grade_"))

@@ -82,5 +82,7 @@ class Score(Model):
 
     user = fields.ForeignKeyField("models.User", related_name="scores")
 
+    is_decided = fields.BooleanField(default=False)
+
     class Meta:
         table = "scores"
