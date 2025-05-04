@@ -246,3 +246,4 @@ async def answer_high(update: CallbackQuery | Message, state: FSMContext):
     await state.set_data({"quest": None, "quest_number": None})
 
     await update.answer() if isinstance(update, CallbackQuery) else None
+
