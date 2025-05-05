@@ -4,12 +4,14 @@ import { mockClasses } from "@/lib/mock";
 
 export default function HomePage() {
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Выберите класс</h1>
+    // <main className="p-6">
+    // <main className="p-6 min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+    <main className="p-6 min-h-screen bg-[url('https://i.pinimg.com/originals/6b/df/80/6bdf807d63f9667a271ec8d14a8a61fe.jpg')] bg-repeat bg-fixed">
+      <h1 className="text-2xl font-bold mb-6 text-white">Выберите класс:</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {mockClasses.map((cls) => (
           <Link key={cls.id} href={`/class/${cls.id}`}>
-            <div className="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+            <div className="bg-white rounded-2xl p-6 h-50 shadow hover:shadow-lg transition flex items-center justify-center">
               <h2 className="text-xl font-semibold">{cls.name}</h2>
             </div>
           </Link>
