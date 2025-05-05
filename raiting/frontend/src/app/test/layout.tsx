@@ -25,13 +25,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="ru">
       <body>
         <Layout style={{ minHeight: "100vh" }} className="background">
-          <Sider width={200} style={{ background: "#ffffffcc" }}>
+          <Sider width={300} style={{ background: "#ffffffcc" }}>
             <div style={{ padding: "16px", fontWeight: "bold", fontSize: "18px" }}>
               Классы
             </div>
             <Menu
               onClick={onClick}
-              style={{ width: 256 }}
+              // style={{ width: 256 }}
               selectedKeys={[current]}
               mode="inline"
             >
