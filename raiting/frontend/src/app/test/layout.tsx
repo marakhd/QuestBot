@@ -2,8 +2,8 @@
 
 import { Layout, Menu } from "antd";
 import Link from "next/link";
+import { ReactNode, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
 
 const { Header, Sider, Content } = Layout;
 
@@ -15,34 +15,44 @@ const mockClasses = [
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [current, setCurrent] = useState<string>(pathname || "/");
+
+  const onClick = (e: { key: string }) => {
+    setCurrent(e.key);
+  };
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <Sider width={200} style={{ background: "#fff" }}>
-        <div style={{ padding: "16px", fontWeight: "bold", fontSize: "18px" }}>
-          Классы
-        </div>
-        <Menu
-          mode="inline"
-          selectedKeys={[pathname]}
-          style={{ height: "100%", borderRight: 0 }}
-        >
-          <Menu.Item key="/">
-            <Link href="/">🏠 Главная</Link>
-          </Menu.Item>
-          {mockClasses.map((cls) => (
-            <Menu.Item key={`/class/${cls.id}`}>
-              <Link href={`/class/${cls.id}`}>{cls.name}</Link>
-            </Menu.Item>
-          ))}
-        </Menu>
-      </Sider>
-      <Layout>
-        <Header style={{ background: "#f5f5f5", padding: 0 }} />
-        <Content style={{ margin: "24px 16px 0", overflow: "initial" }}>
-          {children}
-        </Content>
-      </Layout>
-    </Layout>
+    <html lang="ru">
+      <body>
+        <Layout style={{ minHeight: "100vh" }} className="background">
+          <Sider width={200} style={{ background: "#ffffffcc" }}>
+            <div style={{ padding: "16px", fontWeight: "bold", fontSize: "18px" }}>
+              Классы
+            </div>
+            <Menu
+              onClick={onClick}
+              style={{ width: 256 }}
+              selectedKeys={[current]}
+              mode="inline"
+            >
+              <Menu.Item key="/" icon={<i className="fas fa-home"></i>}>
+                <Link href="/">🏠 Главная</Link>
+              </Menu.Item>
+              {mockClasses.map((cls) => (
+                <Menu.Item key={`/test/class/${cls.id}`} icon={<i className="fas fa-chalkboard"></i>}>
+                  <Link href={`/test/class/${cls.id}`}>{cls.name}</Link>
+                </Menu.Item>
+              ))}
+            </Menu>
+          </Sider>
+          <Layout>
+            <Header style={{ background: "#f5f5f5", padding: 0 }} />
+            <Content style={{ margin: "24px 16px 0", overflow: "initial" }}>
+              {children}
+            </Content>
+          </Layout>
+        </Layout>
+      </body>
+    </html>
   );
 }
