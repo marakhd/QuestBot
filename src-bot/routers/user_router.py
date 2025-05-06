@@ -1,5 +1,6 @@
+import re
 from aiogram import Router, F
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import (
     Message,
     CallbackQuery,
@@ -103,8 +104,25 @@ async def service(message: Message):
     )
 
 
+@router.message(CommandStart(
+    deep_link=True,
+    magic=F.args.regexp(re.compile(r'id_(\d+)'))
+))
+async def cmd_start_book(
+        message: Message,
+        command: CommandObject
+):
+    args = command.args.split("_")
+    id = args[1]
+
+    await message.answer(
+        f'<a href="tg://user?id={id}">Пользователь</a>',
+        parse_mode="HTML"
+    )
+
+
 @router.message(CommandStart())
-async def start(message: Message):
+async def start(message: Message, command: CommandObject):
     user = await User.get_or_none(
         tg_id=message.from_user.id,
     )
