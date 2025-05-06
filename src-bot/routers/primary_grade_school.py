@@ -21,6 +21,7 @@ async def quest_primary(callback: CallbackQuery, state: FSMContext):
     quest_number = int(callback.data.split("_")[2])
 
     if quest_number > len(settings.MODEL_TASKS_PRIMARY):
+        await callback.message.answer("🎆")
         await callback.message.edit_text("Вы завершили квест!")
         return
 

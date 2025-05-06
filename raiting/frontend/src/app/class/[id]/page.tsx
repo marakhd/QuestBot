@@ -31,7 +31,7 @@ export default function ClassPage() {
   }
 
   return !class_ ? (
-    <Spin size="large" />
+    <div className="flex h-screen items-center justify-center"><Spin size="large" /></div>
   ) : (
     <main className="text-white p-6 h-screen bg-[url('https://i.pinimg.com/originals/6b/df/80/6bdf807d63f9667a271ec8d14a8a61fe.jpg')]">
       <div className="flex justify-between items-center mb-4">

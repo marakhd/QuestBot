@@ -118,6 +118,7 @@ async def quest_high(callback: CallbackQuery, state: FSMContext):
 
     if quest_number > len(settings.MODEL_TASKS_HIGH):
         await callback.message.edit_text("Вы завершили квест!")
+        await callback.message.answer("🎆")
         user.end_time = datetime.now()
         await user.save()
         return
@@ -125,7 +126,8 @@ async def quest_high(callback: CallbackQuery, state: FSMContext):
     if not quest_id:
         active_quest = await generate_random_task(user)
         if not active_quest:
-            callback.answer("Квест завершен, доступных заданий не осталось")
+            await callback.answer("Квест завершен, доступных заданий не осталось")
+            await callback.message.answer("🎆")
             user.end_time = datetime.now()
             await user.save()
     else:

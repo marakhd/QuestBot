@@ -117,7 +117,7 @@ async def cmd_start_book(message: Message, command: CommandObject):
 
 
 @router.message(CommandStart())
-async def start(message: Message, command: CommandObject):
+async def start(message: Message, state: FSMContext):
     user = await User.get_or_none(
         tg_id=message.from_user.id,
     )
@@ -144,7 +144,20 @@ async def start(message: Message, command: CommandObject):
             ),
         )
     else:
-        await message.answer("Вы завершили квест!")
+        kb = InlineKeyboardBuilder().button(
+            text="Перейти к квесту",
+            callback_data=f"quest_{user.last_task_number}_{user.last_task.id}",
+        )
+
+        await state.set_data({
+            "user": user,
+            # "class": class_,
+        })
+
+        await message.answer(
+            "Выберите действие",
+            reply_markup=kb.as_markup(),
+        )
 
 
 @router.callback_query(F.data.startswith("choice-grade_"))
