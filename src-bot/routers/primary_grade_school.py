@@ -69,7 +69,7 @@ async def quest_primary(callback: CallbackQuery, state: FSMContext):
                 if quest.data.startswith("static")
                 else URLInputFile(quest.data, timeout=60)
             ),
-            caption=f"Квест №{quest_number}\n\n{quest.text}\n\nОтвет: {quest.correct_answer}",
+            caption=f"Квест №{quest_number}\n\n{quest.text}", # \n\nОтвет: {quest.correct_answer}",
             reply_markup=kb.as_markup(),
         )
     elif quest.answer_type == "PIC":
@@ -80,19 +80,19 @@ async def quest_primary(callback: CallbackQuery, state: FSMContext):
                 if quest.data.startswith("static")
                 else URLInputFile(quest.data, timeout=90)
             ),
-            caption=f"Квест №{quest_number}\n\n{quest.text}\n\nОтвет: {quest.correct_answer}",
+            caption=f"Квест №{quest_number}\n\n{quest.text}", # \n\nОтвет: {quest.correct_answer}",
             reply_markup=kb.as_markup(),
         )
     else:
         try:
             await callback.message.edit_text(
-                f"Квест №{quest_number}\n\n{quest.text}\n\nОтвет: {quest.correct_answer}",
+                f"Квест №{quest_number}\n\n{quest.text}", # \n\nОтвет: {quest.correct_answer}",
                 reply_markup=kb.as_markup(),
             )
         except TelegramBadRequest:
             await callback.message.delete()
             await callback.message.answer(
-                f"Квест №{quest_number}\n\n{quest.text}\n\nОтвет: {quest.correct_answer}",
+                f"Квест №{quest_number}\n\n{quest.text}", # \n\nОтвет: {quest.correct_answer}",
                 reply_markup=kb.as_markup(),
             )
 
@@ -108,8 +108,9 @@ async def answer_primary(update: CallbackQuery | Message, state: FSMContext):
 
     message: Message = update.message if isinstance(update, CallbackQuery) else update
     text = message.text if isinstance(update, Message) else update.data
+    text.replace("answer_primary_", "")
 
-    if quest.correct_answer.lower() == text.replace("answer_primary_", "").lower():
+    if quest.correct_answer.strip().lower().startswith(text.strip().lower()):
         if len(settings.MODEL_TASKS_PRIMARY) == quest_number:
             await message.answer("Вы завершили квест!")
             await state.clear()

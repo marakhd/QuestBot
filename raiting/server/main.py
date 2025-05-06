@@ -39,7 +39,7 @@ async def get_user_detail(user_id: int):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    correct_scores = [s for s in await user.scores.all() if s.is_decided]
+    correct_scores = [s for s in await user.scores.all()]
     time_spent = (user.end_time - user.start_time).total_seconds() if user.start_time and user.end_time else 0
 
     tasks = []

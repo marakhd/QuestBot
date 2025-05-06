@@ -104,15 +104,30 @@ async def service(message: Message):
     )
 
 
+@router.message(Command("reactive"))
+async def service(message: Message):
+    quests = await Quest.filter(is_active=False, grade_group="1-4")
+    count = 0
+    for quest in quests:
+        await quest.update_or_create(
+            id=quest.id,
+            defaults={
+                "is_active": True,
+            },
+        )
+        count += 1
+    await message.answer(f"ОК ({count} записей обновлено)")
+
+
 @router.message(
     CommandStart(deep_link=True, magic=F.args.regexp(re.compile(r"id_(\d+)")))
 )
-async def cmd_start_book(message: Message, command: CommandObject):
+async def cmd_start(message: Message, command: CommandObject):
     args = command.args.split("_")
     id = args[1]
 
     await message.answer(
-        f'<a href="tg://user?id={id}">Пользователь</a>', parse_mode="HTML"
+        f"Пользователь tg://user?id={id}", parse_mode="MARKDOWN"
     )
 
 
@@ -120,7 +135,7 @@ async def cmd_start_book(message: Message, command: CommandObject):
 async def start(message: Message, state: FSMContext):
     user = await User.get_or_none(
         tg_id=message.from_user.id,
-    )
+    ).prefetch_related("last_task")
 
     if not (await message.bot.get_chat(message.chat.id)).pinned_message:
         await (
@@ -149,10 +164,12 @@ async def start(message: Message, state: FSMContext):
             callback_data=f"quest_{user.last_task_number}_{user.last_task.id}",
         )
 
-        await state.set_data({
-            "user": user,
-            # "class": class_,
-        })
+        await state.set_data(
+            {
+                "user": user,
+                # "class": class_,
+            }
+        )
 
         await message.answer(
             "Выберите действие",

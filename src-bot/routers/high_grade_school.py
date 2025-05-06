@@ -170,8 +170,8 @@ async def quest_high(callback: CallbackQuery, state: FSMContext):
             caption=f"""
 Задание {quest_number} из {len(settings.MODEL_TASKS_HIGH)}\n\n
 {active_quest.text}\n\n
-Ответ: <code>{active_quest.correct_answer}</code>
 """,
+# Ответ: <code>{active_quest.correct_answer}</code>
             reply_markup=kb.as_markup(),
         )
     elif active_quest.answer_type == "PIC":
@@ -186,8 +186,8 @@ async def quest_high(callback: CallbackQuery, state: FSMContext):
             caption=f"""
 Задание {quest_number} из {len(settings.MODEL_TASKS_HIGH)}\n
 {active_quest.text}\n
-Ответ: <code>{active_quest.correct_answer}</code>
 """,
+# Ответ: <code>{active_quest.correct_answer}</code>
             reply_markup=kb.as_markup(),
         )
     else:
@@ -198,8 +198,8 @@ async def quest_high(callback: CallbackQuery, state: FSMContext):
                 f"""
 Задание {quest_number} из {len(settings.MODEL_TASKS_HIGH)}\n
 {active_quest.text}\n
-Ответ: <code>{active_quest.correct_answer}</code>
 """,
+# Ответ: <code>{active_quest.correct_answer}</code>
                 reply_markup=kb.as_markup(),
             )
         except TelegramBadRequest:
