@@ -228,7 +228,7 @@ async def answer_high(update: CallbackQuery | Message, state: FSMContext):
 
     is_decided = False
 
-    if quest.correct_answer.lower() == text.lower() or text.lower().startswith(quest.correct_answer.lower()):
+    if quest.correct_answer.strip().lower().startswith(text.strip().lower()):
         if len(settings.MODEL_TASKS_HIGH) == quest_number:
             await message.answer("✅ Вы завершили квест!")
             await state.clear()

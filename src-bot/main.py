@@ -2,8 +2,9 @@ from asyncio import run
 import logging
 from sys import exit as sys_exit
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, Router
 from aiogram.client.default import DefaultBotProperties
+from aiogram.types import Message
 
 from config import settings
 from db import close_db, init_db
@@ -19,7 +20,19 @@ async def main():
     try:
         from routers import user_router, primary_grade_router, high_grade_router
 
-        dp.include_routers(primary_grade_router, high_grade_router, user_router,)
+        router = Router()
+
+        dp.include_routers(
+            user_router,
+            primary_grade_router,
+            high_grade_router,
+            router,
+        )
+
+        @router.message()
+        async def echo(message: Message):
+            await message.answer("Пропиши /start")
+
         await dp.start_polling(bot)
     finally:
         await close_db()

@@ -84,9 +84,9 @@ start_text = lambda message: dedent(
 #     # Извлекаем задания после сортировки
 #     quests = [quest for quest, _ in weighted_quests]
 
-    # active_quest = await anext(
-    #     (q for q in quests if not await Score.get_or_none(quest=q, class_=class_)), None
-    # )
+# active_quest = await anext(
+#     (q for q in quests if not await Score.get_or_none(quest=q, class_=class_)), None
+# )
 #     await class_.update_or_create(id=class_.id, defaults={"last_task": active_quest})
 
 #     return active_quest
@@ -104,20 +104,15 @@ async def service(message: Message):
     )
 
 
-@router.message(CommandStart(
-    deep_link=True,
-    magic=F.args.regexp(re.compile(r'id_(\d+)'))
-))
-async def cmd_start_book(
-        message: Message,
-        command: CommandObject
-):
+@router.message(
+    CommandStart(deep_link=True, magic=F.args.regexp(re.compile(r"id_(\d+)")))
+)
+async def cmd_start_book(message: Message, command: CommandObject):
     args = command.args.split("_")
     id = args[1]
 
     await message.answer(
-        f'<a href="tg://user?id={id}">Пользователь</a>',
-        parse_mode="HTML"
+        f'<a href="tg://user?id={id}">Пользователь</a>', parse_mode="HTML"
     )
 
 
@@ -148,7 +143,8 @@ async def start(message: Message, command: CommandObject):
                 .as_markup()
             ),
         )
-    else: await message.answer("Вы завершили квест!")
+    else:
+        await message.answer("Вы завершили квест!")
 
 
 @router.callback_query(F.data.startswith("choice-grade_"))
@@ -175,6 +171,8 @@ async def choice_grade(callback: CallbackQuery):
                 "Вы выбрали среднюю или старшую школу! Выберите класс или поменяйте свой выбор...",
                 reply_markup=await create_class_selection_kb(),
             )
+    else:
+        await callback.answer("Вы уже выбрали класс!")
 
     await callback.answer()
 
@@ -468,8 +466,3 @@ async def end_quest(callback: CallbackQuery):
 @router.callback_query(F.data == "del")
 async def del_msg(callback: CallbackQuery):
     await callback.message.delete()
-
-
-@router.message()
-async def echo(message: Message):
-    await message.answer("Пропиши /start")
