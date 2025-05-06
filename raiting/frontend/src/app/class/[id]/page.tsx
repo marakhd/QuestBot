@@ -62,7 +62,7 @@ export default function ClassPage() {
       >
         {selectedStudent && (
           <div>
-            <p className="mb-2 text-sm text-gray-600">Telegram: <a href={`//t.me/${selectedStudent.tg_username}`}>@{selectedStudent.tg_username}</a></p>
+            <p className="mb-2 text-sm text-gray-600">Telegram: <a href={`https://t.me/${selectedStudent.tg_username}`}>@{selectedStudent.tg_username}</a></p>
             <h3 className="font-semibold mt-4">Ответы:</h3>
             <ul className="mt-2 space-y-2">
               {selectedStudent.answers.length > 0 ? (
